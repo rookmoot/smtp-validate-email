@@ -1,0 +1,21 @@
+{
+    "name": "rookmoot/smtp-validate-email",
+    "type": "library",
+    "description": "A PHP class for performing email addresses validation via SMTP.",
+    "keywords": ["scraper", "mail", "smtp", "validator"],
+    "homepage": "",
+    "authors": [
+	{
+	    "name": "Tomaš Trkulja",
+	    "email": ""
+	},
+	{
+  	    "name": "Stéphane Bauland",
+	    "email": "stephane.bauland@diatelys.fr"
+	}
+    ],
+    
+    "autoload": {
+	"psr-4": {"SmtpValidateEmail\\": "src/"}
+    }
+}

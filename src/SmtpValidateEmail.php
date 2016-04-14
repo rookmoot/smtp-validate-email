@@ -31,20 +31,22 @@
 * See the source and comments for more details.
 */
 
+namespace SmtpValidateEmail;
+
 // Exceptions we throw
-class SMTP_Validate_Email_Exception extends Exception {}
-class SMTP_Validate_Email_Exception_Timeout extends SMTP_Validate_Email_Exception {}
-class SMTP_Validate_Email_Exception_Unexpected_Response extends SMTP_Validate_Email_Exception {}
-class SMTP_Validate_Email_Exception_No_Response extends SMTP_Validate_Email_Exception {}
-class SMTP_Validate_Email_Exception_No_Connection extends SMTP_Validate_Email_Exception {}
-class SMTP_Validate_Email_Exception_No_Helo extends SMTP_Validate_Email_Exception {}
-class SMTP_Validate_Email_Exception_No_Mail_From extends SMTP_Validate_Email_Exception {}
-class SMTP_Validate_Email_Exception_No_Timeout extends SMTP_Validate_Email_Exception {}
-class SMTP_Validate_Email_Exception_No_TLS extends SMTP_Validate_Email_Exception {}
-class SMTP_Validate_Email_Exception_Send_Failed extends SMTP_Validate_Email_Exception {}
+class SmtpValidateEmailException extends \Exception {}
+class SmtpValidateEmailException_Timeout extends SmtpValidateEmailException {}
+class SmtpValidateEmailException_Unexpected_Response extends SmtpValidateEmailException {}
+class SmtpValidateEmailException_No_Response extends SmtpValidateEmailException {}
+class SmtpValidateEmailException_No_Connection extends SmtpValidateEmailException {}
+class SmtpValidateEmailException_No_Helo extends SmtpValidateEmailException {}
+class SmtpValidateEmailException_No_Mail_From extends SmtpValidateEmailException {}
+class SmtpValidateEmailException_No_Timeout extends SmtpValidateEmailException {}
+class SmtpValidateEmailException_No_TLS extends SmtpValidateEmailException {}
+class SmtpValidateEmailException_Send_Failed extends SmtpValidateEmailException {}
 
 // SMTP validation class
-class SMTP_Validate_Email {
+class SmtpValidateEmail {
 
     // holds the socket connection resource
     private $socket;
@@ -263,7 +265,7 @@ class SMTP_Validate_Email {
                     if ($this->connected()) {
                         break;
                     }
-                } catch (SMTP_Validate_Email_Exception_No_Connection $e) {
+                } catch (SmtpValidateEmailException_No_Connection $e) {
                     // unable to connect to host, so these addresses are invalid?
                     $this->debug('Unable to connect. Exception caught: ' . $e->getMessage());
                     $this->set_domain_results($users, $domain, false);
@@ -332,13 +334,13 @@ class SMTP_Validate_Email {
 
                     }
 
-                } catch (SMTP_Validate_Email_Exception_Unexpected_Response $e) {
+                } catch (SmtpValidateEmailException_Unexpected_Response $e) {
 
                     // Unexpected responses handled as $this->no_comm_is_valid, that way anyone can
                     // decide for themselves if such results are considered valid or not
                     $this->set_domain_results($users, $domain, $this->no_comm_is_valid);
 
-                } catch (SMTP_Validate_Email_Exception_Timeout $e) {
+                } catch (SmtpValidateEmailException_Timeout $e) {
 
                     // A timeout is a comm failure, so treat the results on that domain
                     // according to $this->no_comm_is_valid as well
@@ -387,8 +389,8 @@ class SMTP_Validate_Email {
     * Tries to connect to the specified host on the pre-configured port.
     * @param string $host   The host to connect to
     * @return void
-    * @throws SMTP_Validate_Email_Exception_No_Connection
-    * @throws SMTP_Validate_Email_Exception_No_Timeout
+    * @throws SmtpValidateEmailException_No_Connection
+    * @throws SmtpValidateEmailException_No_Timeout
     */
     protected function connect($host) {
         $remote_socket = $host . ':' . $this->connect_port;
@@ -408,12 +410,12 @@ class SMTP_Validate_Email {
         // connected?
         if (!$this->connected()) {
             $this->debug('Connect failed: ' . $errstr . ', error number: ' . $errnum . ', host: ' . $this->host);
-            throw new SMTP_Validate_Email_Exception_No_Connection('Cannot ' .
+            throw new SmtpValidateEmailException_No_Connection('Cannot ' .
             'open a connection to remote host (' . $this->host . ')');
         }
         $result = stream_set_timeout($this->socket, $this->connect_timeout);
         if (!$result) {
-            throw new SMTP_Validate_Email_Exception_No_Timeout('Cannot set timeout');
+            throw new SmtpValidateEmailException_No_Timeout('Cannot set timeout');
         }
         $this->debug('Connected to ' . $this->host . ' successfully');
     }
@@ -468,12 +470,12 @@ class SMTP_Validate_Email {
                 $result = stream_socket_enable_crypto($this->socket, true,
                     STREAM_CRYPTO_METHOD_TLS_CLIENT);
                 if (!$result) {
-                    throw new SMTP_Validate_Email_Exception_No_TLS('Cannot enable TLS');
+                    throw new SmtpValidateEmailException_No_TLS('Cannot enable TLS');
                 }
             }
             */
             return true;
-        } catch (SMTP_Validate_Email_Exception_Unexpected_Response $e) {
+        } catch (SmtpValidateEmailException_Unexpected_Response $e) {
             // connected, but recieved an unexpected response, so disconnect
             $this->debug('Unexpected response after connecting: ' . $e->getMessage());
             $this->disconnect(false);
@@ -490,7 +492,7 @@ class SMTP_Validate_Email {
             // modern
             $this->send('EHLO ' . $this->from_domain);
             $this->expect(self::SMTP_GENERIC_SUCCESS, $this->command_timeouts['ehlo']);
-        } catch (SMTP_Validate_Email_Exception_Unexpected_Response $e) {
+        } catch (SmtpValidateEmailException_Unexpected_Response $e) {
             // legacy
             $this->send('HELO ' . $this->from_domain);
             $this->expect(self::SMTP_GENERIC_SUCCESS, $this->command_timeouts['helo']);
@@ -501,11 +503,11 @@ class SMTP_Validate_Email {
     * Sends a MAIL FROM command to indicate the sender.
     * @param string $from   The "From:" address
     * @return bool          If MAIL FROM command was accepted or not
-    * @throws SMTP_Validate_Email_Exception_No_Helo
+    * @throws SmtpValidateEmailException_No_Helo
     */
     protected function mail($from) {
         if (!$this->state['helo']) {
-            throw new SMTP_Validate_Email_Exception_No_Helo('Need HELO before MAIL FROM');
+            throw new SmtpValidateEmailException_No_Helo('Need HELO before MAIL FROM');
         }
         // issue MAIL FROM, 5 minute timeout
         $this->send('MAIL FROM:<' . $from . '>');
@@ -515,7 +517,7 @@ class SMTP_Validate_Email {
             $this->state['mail'] = true;
             $this->state['rcpt'] = false;
             return true;
-        } catch (SMTP_Validate_Email_Exception_Unexpected_Response $e) {
+        } catch (SmtpValidateEmailException_Unexpected_Response $e) {
             // got something unexpected in response to MAIL FROM
             $this->debug("Unexpected response to MAIL FROM\n:" . $e->getMessage());
             // hotmail has been known to do this + was closing the connection
@@ -529,12 +531,12 @@ class SMTP_Validate_Email {
     * Sends a RCPT TO command to indicate a recipient.
     * @param string $to Recipient's email address
     * @return bool      Is the recipient accepted
-    * @throws SMTP_Validate_Email_Exception_No_Mail_From
+    * @throws SmtpValidateEmailException_No_Mail_From
     */
     protected function rcpt($to) {
         // need to have issued MAIL FROM first
         if (!$this->state['mail']) {
-            throw new SMTP_Validate_Email_Exception_No_Mail_From('Need MAIL FROM before RCPT TO');
+            throw new SmtpValidateEmailException_No_Mail_From('Need MAIL FROM before RCPT TO');
         }
         $is_valid = false;
         $expected_codes = array(
@@ -552,10 +554,10 @@ class SMTP_Validate_Email {
                 $this->expect($expected_codes, $this->command_timeouts['rcpt']);
                 $this->state['rcpt'] = true;
                 $is_valid = true;
-            } catch (SMTP_Validate_Email_Exception_Unexpected_Response $e) {
+            } catch (SmtpValidateEmailException_Unexpected_Response $e) {
                 $this->debug('Unexpected response to RCPT TO: ' . $e->getMessage());
             }
-        } catch (SMTP_Validate_Email_Exception $e) {
+        } catch (SmtpValidateEmailException $e) {
             $this->debug('Sending RCPT TO failed: ' . $e->getMessage());
         }
         return $is_valid;
@@ -616,20 +618,20 @@ class SMTP_Validate_Email {
     * Sends a command to the remote host.
     * @param string $cmd    The cmd to send
     * @return int|bool      Number of bytes written to the stream
-    * @throws SMTP_Validate_Email_Exception_No_Connection
-    * @throws SMTP_Validate_Email_Exception_Send_Failed
+    * @throws SmtpValidateEmailException_No_Connection
+    * @throws SmtpValidateEmailException_Send_Failed
     */
     protected function send($cmd) {
         // must be connected
         if (!$this->connected()) {
-            throw new SMTP_Validate_Email_Exception_No_Connection('No connection');
+            throw new SmtpValidateEmailException_No_Connection('No connection');
         }
         $this->debug('send>>>: ' . $cmd);
         // write the cmd to the connection stream
         $result = fwrite($this->socket, $cmd . self::CRLF);
         // did the send work?
         if ($result === false) {
-            throw new SMTP_Validate_Email_Exception_Send_Failed('Send failed ' .
+            throw new SmtpValidateEmailException_Send_Failed('Send failed ' .
             'on: ' . $this->host);
         }
         return $result;
@@ -639,13 +641,13 @@ class SMTP_Validate_Email {
     * Receives a response line from the remote host.
     * @param int $timeout Timeout in seconds
     * @return string
-    * @throws SMTP_Validate_Email_Exception_No_Connection
-    * @throws SMTP_Validate_Email_Exception_Socket_Timeout
-    * @throws SMTP_Validate_Email_Exception_No_Response
+    * @throws SmtpValidateEmailException_No_Connection
+    * @throws SmtpValidateEmailException_Socket_Timeout
+    * @throws SmtpValidateEmailException_No_Response
     */
     protected function recv($timeout = null) {
         if (!$this->connected()) {
-            throw new SMTP_Validate_Email_Exception_No_Connection('No connection');
+            throw new SmtpValidateEmailException_No_Connection('No connection');
         }
         // timeout specified?
         if ($timeout !== null) {
@@ -657,11 +659,11 @@ class SMTP_Validate_Email {
         // have we timed out?
         $info = stream_get_meta_data($this->socket);
         if (!empty($info['timed_out'])) {
-            throw new SMTP_Validate_Email_Exception_Timeout('Timed out in recv');
+            throw new SmtpValidateEmailException_Timeout('Timed out in recv');
         }
         // did we actually receive anything?
         if ($line === false) {
-            throw new SMTP_Validate_Email_Exception_No_Response('No response in recv');
+            throw new SmtpValidateEmailException_No_Response('No response in recv');
         }
         return $line;
     }
@@ -672,7 +674,7 @@ class SMTP_Validate_Email {
     * @param int $timeout The timeout for this individual command, if any
     * @param bool $empty_response_allowed When true, empty responses are not allowed
     * @return string The last text message received
-    * @throws SMTP_Validate_Email_Exception_Unexpected_Response
+    * @throws SmtpValidateEmailException_Unexpected_Response
     */
     protected function expect($codes, $timeout = null, $empty_response_allowed = false) {
         if (!is_array($codes)) {
@@ -689,10 +691,10 @@ class SMTP_Validate_Email {
             }
             sscanf($line, '%d%s', $code, $text);
             if (($empty_response_allowed === false && ($code === null || !in_array($code, $codes))) || $code == self::SMTP_SERVICE_UNAVAILABLE) {
-                throw new SMTP_Validate_Email_Exception_Unexpected_Response($line);
+                throw new SmtpValidateEmailException_Unexpected_Response($line);
             }
 
-        } catch (SMTP_Validate_Email_Exception_No_Response $e) {
+        } catch (SmtpValidateEmailException_No_Response $e) {
 
             // no response in expect() probably means that the
             // remote server forcibly closed the connection so
